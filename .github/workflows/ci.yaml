@@ -1,5 +1,4 @@
 name: CodeQL and Lint
-
 on:
   push:
     branches: ["master"]
@@ -46,6 +45,24 @@ jobs:
         with:
           name: codeql-database
           path: ./.codeql
+
+  srclr:
+    name: Run SourceClear (SRCCLR) Agent
+    runs-on: ubuntu-latest
+    needs: [analyze, lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install SourceClear (SRCCLR) Agent
+        run: |
+          curl -sSL https://download.sourceclear.com/ci.sh | bash
+      - name: Run SourceClear (SRCCLR) Scan
+        run: ./srcclr scan --allow-dirty || true
+      - name: Upload SRCCLR Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: srclr-report
+          path: .srclr
 
   lint:
     name: Run ESLint
