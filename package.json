@@ -6,7 +6,8 @@
   "description": "A node project to demonstrate srcclr agent's vulnerable methods for JavaScript",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "lint": "eslint ."
   },
   "dependencies": {
     "algo-httpserv": "1.1.1",
