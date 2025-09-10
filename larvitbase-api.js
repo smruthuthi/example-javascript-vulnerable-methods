@@ -1,17 +1,17 @@
-'use strict';
+"use strict";
 
-const	topLogPrefix	= 'larvitbase-api: ./index.js: ',
-	ReqParser	= require('larvitreqparser'),
-	Router	= require('larvitrouter'),
-	semver	= require('semver'),
-	LBase	= require('larvitbase'),
-	path	= require('path'),
-	Lfs	= require('larvitfs'),
-	fs	= require('fs'),
-	LUtils	= require('larvitutils');
+const	topLogPrefix	= "larvitbase-api: ./index.js: ",
+	ReqParser	= require("larvitreqparser"),
+	Router	= require("larvitrouter"),
+	semver	= require("semver"),
+	LBase	= require("larvitbase"),
+	path	= require("path"),
+	Lfs	= require("larvitfs"),
+	fs	= require("fs"),
+	LUtils	= require("larvitutils");
 
 function Api(options) {
-	const	logPrefix	= topLogPrefix + 'Api() - ',
+	const	logPrefix	= topLogPrefix + "Api() - ",
 		that	= this;
 
 	let	controllersFullPath,
@@ -34,7 +34,7 @@ function Api(options) {
 
 
 	if ( ! that.options.routerOptions)	{ that.options.routerOptions	= {};	}
-	if ( ! that.options.routerOptions.controllersPath)	{ that.options.routerOptions.controllersPath	= 'controllers';	}
+	if ( ! that.options.routerOptions.controllersPath)	{ that.options.routerOptions.controllersPath	= "controllers";	}
 	if ( ! that.options.routerOptions.basePath)	{ that.options.routerOptions.basePath	= process.cwd();	}
 	if ( ! Array.isArray(that.options.routerOptions.routes))	{ that.options.routerOptions.routes	= [];	}
 
@@ -52,18 +52,18 @@ function Api(options) {
 	that.middleware	= options.baseOptions.middleware;
 
 	// Instantiate lfs
-	lfs	= new Lfs({'basePath': that.options.routerOptions.basePath});
+	lfs	= new Lfs({"basePath": that.options.routerOptions.basePath});
 
-	altControllerPaths = lfs.getPathsSync('controllers');
+	altControllerPaths = lfs.getPathsSync("controllers");
 
 	// Resolve apiVersions
 	controllersFullPath	= path.join(that.options.routerOptions.basePath, that.options.routerOptions.controllersPath);
 	if (fs.existsSync(controllersFullPath)) {
 		that.apiVersions = fs.readdirSync(controllersFullPath).filter(function (file) {
-			let	versionStr	= semver.clean(String(file) + '.0');
+			let	versionStr	= semver.clean(String(file) + ".0");
 
 			if (
-				fs.statSync(controllersFullPath + '/' + file).isDirectory()
+				fs.statSync(controllersFullPath + "/" + file).isDirectory()
 				&& semver.valid(versionStr) !== null
 			) {
 				return true;
@@ -73,12 +73,12 @@ function Api(options) {
 		});
 	} else {
 		that.apiVersions	= [];
-		that.log.info(logPrefix + 'No controllers folder detected');
+		that.log.info(logPrefix + "No controllers folder detected");
 	}
 
 	// Sort apiVersions
 	that.apiVersions.sort(function (a, b) {
-		return semver.gt(a + '.0', b + '.0');
+		return semver.gt(a + ".0", b + ".0");
 	});
 
 	// Instantiate the router
@@ -93,11 +93,11 @@ function Api(options) {
 
 	// Default to the latest version of the API
 	that.middleware.push(function (req, res, cb) {
-		if ( ! semver.valid(req.url.split('/')[1] + '.0') && that.apiVersions.length) {
-			req.url	= '/' + that.apiVersions[that.apiVersions.length - 1] + req.url;
+		if ( ! semver.valid(req.url.split("/")[1] + ".0") && that.apiVersions.length) {
+			req.url	= "/" + that.apiVersions[that.apiVersions.length - 1] + req.url;
 		}
-		req.apiVersion	= req.url.split('/')[1];
-		req.urlBase	= req.url.split('?')[0];
+		req.apiVersion	= req.url.split("/")[1];
+		req.urlBase	= req.url.split("?")[0];
 		cb();
 	});
 
@@ -109,8 +109,8 @@ function Api(options) {
 		if (that.routeCache[req.urlBase]) {
 			const rc = that.routeCache[req.urlBase];
 
-			if (rc.type === 'readme') {
-				res.setHeader('Content-Type', 'text/markdown; charset=UTF-8');
+			if (rc.type === "readme") {
+				res.setHeader("Content-Type", "text/markdown; charset=UTF-8");
 				res.end(rc.data);
 				return;
 			} else {
@@ -127,35 +127,35 @@ function Api(options) {
 		// Check if url is matching a directory that contains a README.md
 
 		// Request directly on root, existing README.md in root
-		if (req.urlBase === '/' && lfs.getPathSync(path.join(that.options.routerOptions.basePath, '/README.md'))) {
-			readmeFile	= path.join(that.options.routerOptions.basePath, '/README.md');
+		if (req.urlBase === "/" && lfs.getPathSync(path.join(that.options.routerOptions.basePath, "/README.md"))) {
+			readmeFile	= path.join(that.options.routerOptions.basePath, "/README.md");
 
 		// README exists on exactly the version URL requested
-		} else if (lfs.getPathSync(path.join(req.urlBase, '/README.md').substring(1))) {
-			readmeFile	= lfs.getPathSync(path.join(req.urlBase, '/README.md').substring(1));
-		} else if (lfs.getPathSync(path.join('controllers/', req.urlBase, '/README.md'))) {
-			readmeFile	= lfs.getPathSync(path.join('controllers/', req.urlBase, '/README.md'));
+		} else if (lfs.getPathSync(path.join(req.urlBase, "/README.md").substring(1))) {
+			readmeFile	= lfs.getPathSync(path.join(req.urlBase, "/README.md").substring(1));
+		} else if (lfs.getPathSync(path.join("controllers/", req.urlBase, "/README.md"))) {
+			readmeFile	= lfs.getPathSync(path.join("controllers/", req.urlBase, "/README.md"));
 
 		// Get readme directly from root, if it is missing in version folders
 		// AND requested url is exactly a version-url
-		} else if (semver.valid(req.url.split('/')[1] + '.0') && lfs.getPathSync('README.md') && req.urlBase === '/' + req.urlBase.split('/')[1] + '/') {
-			readmeFile	= lfs.getPathSync('README.md');
+		} else if (semver.valid(req.url.split("/")[1] + ".0") && lfs.getPathSync("README.md") && req.urlBase === "/" + req.urlBase.split("/")[1] + "/") {
+			readmeFile	= lfs.getPathSync("README.md");
 
 		// Get hard coded string if root or version-url is requested and README.md is missing
 		// AND requested url is exactly a version-url
-		} else if (req.urlBase === '/' || semver.valid(req.url.split('/')[1] + '.0') && req.urlBase === '/' + req.url.split('/')[1] + '/') {
-			return res.end('API is up and running. This API contains no README.md');
+		} else if (req.urlBase === "/" || semver.valid(req.url.split("/")[1] + ".0") && req.urlBase === "/" + req.url.split("/")[1] + "/") {
+			return res.end("API is up and running. This API contains no README.md");
 		}
 
 		// If a readme file is found, send that to the browser and end the request
 		if (readmeFile) {
-			res.setHeader('Content-Type', 'text/markdown; charset=UTF-8');
+			res.setHeader("Content-Type", "text/markdown; charset=UTF-8");
 			return fs.readFile(readmeFile, function (err, data) {
 				if (err) return cb(err);
 
 				that.routeCache[req.urlBase] = {
-					'type': 'readme',
-					'data': data
+					"type": "readme",
+					"data": data
 				};
 				res.end(data);
 			});
@@ -175,10 +175,10 @@ function Api(options) {
 					if (stat.isDirectory()) {
 
 						// check if file exists without version no in the controllers path
-						if (fs.existsSync(path.join(altControllerPaths[i], req.urlBase) + '.js')) {
+						if (fs.existsSync(path.join(altControllerPaths[i], req.urlBase) + ".js")) {
 							req.routed = {
-								'controllerFullPath': path.join(altControllerPaths[i], req.urlBase) + '.js',
-								'controllerPath': req.urlBase
+								"controllerFullPath": path.join(altControllerPaths[i], req.urlBase) + ".js",
+								"controllerPath": req.urlBase
 							};
 							that.routeCache[req.urlBase] = req.routed; // add to cache
 							break;
@@ -200,7 +200,7 @@ function Api(options) {
 	that.middleware.push(function (req, res, cb) {
 		if ( ! req.routed.controllerFullPath) {
 			res.statusCode	= 404;
-			res.data	= '"URL endpoint not found"';
+			res.data	= "\"URL endpoint not found\"";
 			cb();
 		} else {
 			require(req.routed.controllerFullPath)(req, res, cb);
@@ -211,10 +211,10 @@ function Api(options) {
 	that.middleware.push(function (req, res, cb) {
 		let	sendData	= res.data;
 
-		res.setHeader('Content-Type', 'application/json; charset=UTF-8');
+		res.setHeader("Content-Type", "application/json; charset=UTF-8");
 
 		try {
-			if (typeof sendData !== 'string' && ! Buffer.isBuffer(sendData)) {
+			if (typeof sendData !== "string" && ! Buffer.isBuffer(sendData)) {
 				sendData	= JSON.stringify(sendData);
 			}
 		} catch (err) {
@@ -238,9 +238,9 @@ Api.prototype.start = function start(cb) {
 
 	that.base.start(cb);
 
-	that.base.on('error', function (err, req, res) {
+	that.base.on("error", function (err, req, res) {
 		res.statusCode	= 500;
-		res.end('"Internal server error: ' + err.message + '"');
+		res.end("\"Internal server error: " + err.message + "\"");
 	});
 };
 
@@ -253,9 +253,9 @@ Api.prototype.stop = function (cb) {
 ///----------The following are the driver---------------------///
 // the following is an excerpt from lavitbase-api
 const api = new Api({
-        'baseOptions':  {'httpOptions': 8001},  // sent to larvitbase
-        'routerOptions':        {},     // sent to larvitrouter
-        'reqParserOptions':     {},     // sent to larvitReqParser
+        "baseOptions":  {"httpOptions": 8001},  // sent to larvitbase
+        "routerOptions":        {},     // sent to larvitrouter
+        "reqParserOptions":     {},     // sent to larvitReqParser
 });
 
 api.start(function (err) {});

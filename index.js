@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
-const server = require('./server');
+const server = require("./server");
 server.listen(8001);
